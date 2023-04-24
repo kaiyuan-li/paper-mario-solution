@@ -66,7 +66,7 @@ impl Spinner {
             self.grids[r][i] = new_circle[i];
         }
     }
-    // mutates the spinner, in raidal direction
+    // mutates the spinner, in raidal direction move the axes "a" towards the center by "n" units.
     // a: the angular index to change
     // a should only take half of the a_size.
     fn mutate_radial(&mut self, a: usize, n: usize) {
@@ -287,6 +287,11 @@ fn main() {
     //   radial_move_axis,
     //   radial_move_number
     // )
+    // For example, the result of this search is [(1, 2, 0, 0), (6, 3, 0, 0), (9, 1, 0, 0)]
+    // This indicates rotate circle 2 (the third circle from inside) counter clockwise by 1
+    // rotate the fourth circle from inside counterclockwise by 6
+    // rotate the second circle from inside counterclockwise by 9
+    // See the attached screenshot.
     let path = Vec::with_capacity(3);
     if !dfs(&mut spinner, 0, path) {
         println!("no solution found!");
