@@ -1,13 +1,11 @@
 use std::collections::HashSet;
 
-
 #[derive(Debug, Clone, Copy)]
 enum Grid {
     Ice,
     Arrow(Arrow),
     On,
     Hand,
-    Heart,
     Punch,
     Empty,
 }
@@ -15,11 +13,6 @@ enum Grid {
 #[derive(Debug, Clone, Copy)]
 struct Arrow {
     direction: (i8, i8),
-}
-
-#[derive(Debug, Clone, Copy)]
-struct Hand {
-    enabled: bool,
 }
 
 #[derive(Debug)]
@@ -40,7 +33,11 @@ impl Spinner {
             }
             grids.push(circle);
         }
-        Spinner { grids, r_size: r, a_size: a}
+        Spinner {
+            grids,
+            r_size: r,
+            a_size: a,
+        }
     }
 
     fn set_grids(&mut self, grids: Vec<(usize, usize, Grid)>) {
@@ -70,53 +67,47 @@ impl Spinner {
     // a: the angular index to change
     // a should only take half of the a_size.
     fn mutate_radial(&mut self, a: usize, n: usize) {
-        let mut old_axes = Vec::with_capacity(self.r_size*2);
+        let mut old_axes = Vec::with_capacity(self.r_size * 2);
         for i in 0..self.r_size {
             old_axes.push(self.grids[i][a]);
         }
         for i in (0..self.r_size).rev() {
             old_axes.push(self.grids[i][self.a_size / 2 + a]);
         }
-        let mut new_axes = Vec::with_capacity(self.r_size*2);
+        let mut new_axes = Vec::with_capacity(self.r_size * 2);
 
         for i in 0..self.r_size * 2 {
-            new_axes.push(old_axes[(i + n ) % (self.r_size * 2)])
+            new_axes.push(old_axes[(i + n) % (self.r_size * 2)])
         }
         // some grids will move to the other side and get arrow changed.
         // if the grid moves back and moves to the other half, it should have direction changed.
         for i in 0..self.r_size * 2 {
             if (((i + n) / self.r_size) % 2) == ((i / self.r_size) % 2) {
-                continue
+                continue;
             }
 
-                let grid = new_axes[i];
+            let grid = new_axes[i];
 
-                match grid {
-                    Grid::Arrow(arrow) => {
-                        let new_arrow = Arrow {
-                            direction: (-arrow.direction.0, -arrow.direction.1)
-                        };
-                        new_axes[i] = Grid::Arrow(new_arrow);
-                    }
-                    _ => ()
+            match grid {
+                Grid::Arrow(arrow) => {
+                    let new_arrow = Arrow {
+                        direction: (-arrow.direction.0, -arrow.direction.1),
+                    };
+                    new_axes[i] = Grid::Arrow(new_arrow);
                 }
+                _ => (),
             }
- 
+        }
 
         for i in 0..self.r_size {
             self.grids[i][a] = new_axes[i];
             self.grids[self.r_size - i - 1][self.a_size / 2 + a] = new_axes[i + self.r_size];
         }
-
-
     }
-
-    
 }
 
 #[derive(Debug)]
 struct Score {
-    heart: u8,
     punch: bool,
     enable_hand: bool,
     hand: bool,
@@ -124,16 +115,14 @@ struct Score {
 }
 
 fn exercise(spinner: &Spinner) -> Score {
-
     let mut score = Score {
-        heart: 0,
         punch: false,
         enable_hand: false,
         hand: false,
         ice: false,
     };
 
-    let mut loc:(i8, i8) = ((spinner.r_size - 1).try_into().unwrap(), 0);
+    let mut loc: (i8, i8) = ((spinner.r_size - 1).try_into().unwrap(), 0);
     let mut dir: (i8, i8) = (0, 0);
     let mut is_stopped = false;
     let mut is_hand_enabled = false;
@@ -148,7 +137,7 @@ fn exercise(spinner: &Spinner) -> Score {
             Grid::Ice => {
                 is_stopped = true;
                 score.ice = true;
-            } 
+            }
             Grid::Punch => {
                 is_stopped = true;
                 score.punch = true;
@@ -163,19 +152,18 @@ fn exercise(spinner: &Spinner) -> Score {
                     is_stopped = true;
                 }
             }
-            Grid::Heart => {
-                score.heart = 10;
-            }
             _ => (),
         }
-        loc = ((loc.0 + dir.0 ), (loc.1 + dir.1 + (spinner.a_size as i8)) % (spinner.a_size as i8));
-
+        loc = (
+            (loc.0 + dir.0),
+            (loc.1 + dir.1 + (spinner.a_size as i8)) % (spinner.a_size as i8),
+        );
     }
     score
 }
 
 fn dfs(spinner: &mut Spinner, level: i8, mut path: Vec<(i8, i8, i8, i8)>) -> bool {
-    if level >2 {
+    if level > 2 {
         return false;
     }
     for a in 0..spinner.a_size / 2 {
@@ -201,7 +189,6 @@ fn dfs(spinner: &mut Spinner, level: i8, mut path: Vec<(i8, i8, i8, i8)>) -> boo
             path.pop();
             spinner.mutate_radial(a, spinner.r_size * 2 - r);
         }
-
     }
     for a in 1..spinner.a_size {
         for r in 0..spinner.r_size {
@@ -221,7 +208,6 @@ fn dfs(spinner: &mut Spinner, level: i8, mut path: Vec<(i8, i8, i8, i8)>) -> boo
             path.pop();
             spinner.mutate_angular(r, spinner.a_size - a);
         }
-
     }
     return false;
 }
@@ -254,34 +240,34 @@ fn main() {
         // (0, 8, Grid::Heart),
         (1, 2, Grid::On),
         (3, 11, Grid::Hand),
-        (0, 1, Grid::Arrow(Arrow {direction: (0, -1)})),
-        (1, 1, Grid::Arrow(Arrow {direction: (0, -1)})),
-        (2, 1, Grid::Arrow(Arrow {direction: (0, 1)})),
-        (3, 1, Grid::Arrow(Arrow {direction: (-1, 0)})),
-        (0, 3, Grid::Arrow(Arrow {direction: (0, 1)})),
-        (2, 4, Grid::Arrow(Arrow {direction: (-1, 0)})),
-        (0, 5, Grid::Arrow(Arrow {direction: (1, 0)})),
-        (1, 6, Grid::Arrow(Arrow {direction: (-1, 0)})),
-        (3, 6, Grid::Arrow(Arrow {direction: (-1, 0)})),
-        (2, 7, Grid::Arrow(Arrow {direction: (0, -1)})),
-        (3, 8, Grid::Arrow(Arrow {direction: (-1, 0)})),
-        (1, 10, Grid::Arrow(Arrow {direction: (0, 1)})),
-        ]);
-        let verify = false;
+        (0, 1, Grid::Arrow(Arrow { direction: (0, -1) })),
+        (1, 1, Grid::Arrow(Arrow { direction: (0, -1) })),
+        (2, 1, Grid::Arrow(Arrow { direction: (0, 1) })),
+        (3, 1, Grid::Arrow(Arrow { direction: (-1, 0) })),
+        (0, 3, Grid::Arrow(Arrow { direction: (0, 1) })),
+        (2, 4, Grid::Arrow(Arrow { direction: (-1, 0) })),
+        (0, 5, Grid::Arrow(Arrow { direction: (1, 0) })),
+        (1, 6, Grid::Arrow(Arrow { direction: (-1, 0) })),
+        (3, 6, Grid::Arrow(Arrow { direction: (-1, 0) })),
+        (2, 7, Grid::Arrow(Arrow { direction: (0, -1) })),
+        (3, 8, Grid::Arrow(Arrow { direction: (-1, 0) })),
+        (1, 10, Grid::Arrow(Arrow { direction: (0, 1) })),
+    ]);
+    let verify = false;
     if verify {
-    println!("initial spinner:\n{:#?}", spinner);
-    spinner.mutate_angular(2, 1);
-    println!("\n after first mutation\n{:#?}", spinner);
-    spinner.mutate_angular(3, 6);
-    println!("\n after second mutation\n{:#?}", spinner);
+        println!("initial spinner:\n{:#?}", spinner);
+        spinner.mutate_angular(2, 1);
+        println!("\n after first mutation\n{:#?}", spinner);
+        spinner.mutate_angular(3, 6);
+        println!("\n after second mutation\n{:#?}", spinner);
 
-    spinner.mutate_angular(1, 9);
-    println!("\n after last mutation\n{:#?}", spinner);
+        spinner.mutate_angular(1, 9);
+        println!("\n after last mutation\n{:#?}", spinner);
 
-    println!("{:?}", exercise(&spinner));
-    return;
-    } 
-    // Solution is in the format of 
+        println!("{:?}", exercise(&spinner));
+        return;
+    }
+    // Solution is in the format of
     // ( anticlockwise_angular_rotation_number,
     //   angular_rotation_row,
     //   radial_move_axis,
@@ -296,5 +282,4 @@ fn main() {
     if !dfs(&mut spinner, 0, path) {
         println!("no solution found!");
     }
-     
 }
